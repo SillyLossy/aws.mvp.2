@@ -1,0 +1,116 @@
+<div id="interval-block">
+  <b>Screenshot interval: </b>
+  <select id="interval">
+    <option value="5">5</option>
+    <option value="10">10</option>
+    <option value="20">20</option>
+    <option value="30">30</option>
+    <option value="60">60</option>
+  </select>
+</div>
+
+<video id="video" autoplay>
+</video>
+
+<canvas id="canvas">
+</canvas>
+
+<div id="log-block">
+  <b>Saved screenshots:</b>
+  <div id="log">
+
+  </div>
+</div>
+
+<style>
+  #video {
+    width: 640px;
+    height: 480px;
+    margin: 0 1rem;
+    background-color: black;
+  }
+
+  #canvas {
+    width: 640px;
+    height: 480px;
+    display: none;
+  }
+
+  #interval-block,
+  #log-block {
+    margin: 1rem;
+  }
+
+  #log {
+    border: 1px solid lightgray;
+    width: 640px;
+    height: 200px;
+    padding: 0.25rem;
+    overflow-y: scroll;
+  }
+
+  #log a {
+    display: block;
+    margin: 0.5rem;
+  }
+</style>
+
+<script>
+  (async function execute() {
+    let intervalMilliseconds = 10000;
+    let intervalId;
+    let video;
+    let intervalSelect;
+    const canvas = document.createElement('canvas');
+    const log = document.getElementById('log');
+
+    const upload = (blob) => {
+      var formData = new FormData();
+      formData.append("file", blob);
+      let xhr = new XMLHttpRequest();
+      xhr.open('POST', 'http://127.0.0.1:9200/upload');
+      xhr.send(formData);
+      xhr.onload = function () {
+        const link = document.createElement('a');
+        link.innerText = xhr.responseText;
+        link.setAttribute('href', xhr.responseText);
+        link.setAttribute('target', '_blank');
+        log.appendChild(link);
+      };
+    };
+
+    const getScreenshot = () => {
+      canvas.width = video.clientWidth;
+      canvas.height = video.clientHeight;
+      var ctx = canvas.getContext('2d');
+      //draw image to canvas. scale to target dimensions
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      //convert to desired file format
+      canvas.toBlob(upload, 'image/jpeg', 0.8);
+    };
+
+    const setScreenshotInterval = () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+
+      intervalId = setInterval(getScreenshot, intervalMilliseconds);
+    };
+
+    intervalSelect = document.getElementById("interval");
+    intervalSelect.value = intervalMilliseconds / 1000;
+    intervalSelect.addEventListener('change', function (event) {
+      intervalMilliseconds = +event.target.value * 1000;
+      setScreenshotInterval();
+    });
+
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+    setScreenshotInterval();
+    video = document.getElementById("video");
+    video.srcObject = stream;
+    video.play();
+  })();
+</script>
