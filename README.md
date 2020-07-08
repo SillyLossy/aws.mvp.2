@@ -7,7 +7,7 @@ exports.secretKey = 'your aws secret key';
 exports.region = 'your aws region';
 exports.bucket = 'output bucket name';
 ```
-* Type `node index.js`. The server will run on your local port `9000`
+* Type `node index.js`. The server will run on your local port `9200`
 * Open `index.html` in your browser
 
 # Preview
